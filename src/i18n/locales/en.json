@@ -1,0 +1,19 @@
+{
+    "errors": {
+        "email_or_phone_required": "Email or phone number is required.",
+        "user_exists": "User already exists with the provided email or phone number.",
+        "registration_error": "Error registering user.",
+        "user_not_found": "User not found.",
+        "invalid_credentials": "Invalid credentials.",
+        "login_error": "Error logging in.",
+        "missing_expense_fields": "Missing required fields for creating the expense.",
+        "expense_creation_error": "Error creating the expense.",
+        "expense_fetch_error": "Error fetching expenses.",
+        "missing_group_or_user": "Group ID and User ID are required.",
+        "add_user_to_group_error": "Error adding user to the group."
+    },
+    "messages": {
+        "login_success": "Login successful.",
+        "user_added_to_group": "User successfully added to the group."
+    }
+}

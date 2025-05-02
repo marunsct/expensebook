@@ -1,0 +1,16 @@
+{
+    "errors": {
+        "email_or_phone_required": "Se requiere correo electrónico o número de teléfono.",
+        "user_exists": "El usuario ya existe con el correo electrónico o número de teléfono proporcionado.",
+        "registration_error": "Error al registrar al usuario.",
+        "user_not_found": "Usuario no encontrado.",
+        "invalid_credentials": "Credenciales inválidas.",
+        "login_error": "Error al iniciar sesión.",
+        "missing_expense_fields": "Faltan campos obligatorios para crear el gasto.",
+        "expense_creation_error": "Error al crear el gasto.",
+        "expense_fetch_error": "Error al obtener los gastos."
+    },
+    "messages": {
+        "login_success": "Inicio de sesión exitoso."
+    }
+}
