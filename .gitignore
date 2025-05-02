@@ -1,1 +1,14 @@
 /node_modules
+/.env
+/.DS_Store
+/.idea
+/.vscode
+/.nuxt
+/.nuxtg
+/package-lock.json
+/package-lock.json.map
+/.nuxtg-ssr
+/.nuxtg-ssr.json
+/.nuxtg-ssr-manifest.json
+/.nuxtg-ssr-manifest.json.map
+/.nuxtg-ssr-manifest.json.map.json
