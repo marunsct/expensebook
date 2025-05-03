@@ -21,5 +21,9 @@ router.get('/users/:userId/balances', apiController.getUserBalances);
 router.post('/expenses', apiController.createExpense);
 router.get('/expenses', apiController.getAllExpenses);
 
+// Group image routes
+router.post('/groups/:groupId/images', apiController.uploadGroupImage);
+router.get('/groups/:groupId/images', apiController.getGroupImages);
+
 // Export the router
 module.exports = router;

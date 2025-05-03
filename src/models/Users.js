@@ -19,6 +19,7 @@ class User {
         return new User(res.rows[0].id, res.rows[0].name, res.rows[0].email, res.rows[0].phone);
     }
 
+    // Add image handling for expenses and group images
     static async getUserDetails(client, userId) {
         try {
             // Fetch all groups the user is assigned to
@@ -32,9 +33,24 @@ class User {
 
             const groups = groupsRes.rows;
 
+            // Fetch all group images
+            const groupImagesRes = await client.query(
+                `SELECT gi.group_id, gi.image_url
+                 FROM group_images gi
+                 WHERE gi.group_id IN (
+                     SELECT g.id
+                     FROM groups g
+                     INNER JOIN group_users gu ON g.id = gu.group_id
+                     WHERE gu.user_id = $1
+                 )`,
+                [userId]
+            );
+
+            const groupImages = groupImagesRes.rows;
+
             // Fetch all expenses the user is involved in
             const expensesRes = await client.query(
-                `SELECT e.id, e.description, e.currency, e.amount, e.group_id, e.split_method, e.paid_by_user, e.created_at
+                `SELECT e.id, e.description, e.currency, e.amount, e.group_id, e.split_method, e.paid_by_user, e.image, e.created_at
                  FROM expenses e
                  INNER JOIN expense_users eu ON e.id = eu.expense_id
                  WHERE eu.user_id = $1`,
@@ -67,9 +83,14 @@ class User {
                         expense_split: splits.filter((split) => split.expense_id === expense.id),
                     }));
 
+                const images = groupImages
+                    .filter((image) => image.group_id === group.id)
+                    .map((image) => image.image_url);
+
                 return {
                     group: {
                         ...group,
+                        images,
                         expenses: groupExpenses,
                     },
                 };
