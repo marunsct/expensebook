@@ -17,7 +17,17 @@ const createGroup = async (req, res) => {
 };
 
 // Get user details
-const getUserDetails = async (req, res) => {…};
+const getUserDetails = async (req, res) => {
+    const { userId } = req.params;
+
+    try {
+        const userDetails = await User.getUserDetails(pool, userId);
+        res.status(200).json(userDetails);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: req.__('errors.user_details_error') });
+    }
+};
 
 // Get user balances
 const getUserBalances = async (req, res) => {
@@ -34,7 +44,7 @@ const getUserBalances = async (req, res) => {
 
 
 // Create an expense
-exports.createExpense = async (req, res) => {
+const createExpense = async (req, res) => {
     const { description, currency, amount, group_id, split_method, paid_by_user, image, created_by, splits } = req.body;
 
     try {
@@ -88,7 +98,7 @@ const addUserToGroup = async (req, res) => {
 };
 
 // Upload a group image
-exports.uploadGroupImage = async (req, res) => {
+const uploadGroupImage = async (req, res) => {
     const { groupId } = req.params;
     const { image_url } = req.body;
 
@@ -102,7 +112,7 @@ exports.uploadGroupImage = async (req, res) => {
 };
 
 // Fetch all images for a group
-exports.getGroupImages = async (req, res) => {
+const getGroupImages = async (req, res) => {
     const { groupId } = req.params;
 
     try {
