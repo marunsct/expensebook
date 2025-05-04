@@ -12,3 +12,4 @@
 /.nuxtg-ssr-manifest.json
 /.nuxtg-ssr-manifest.json.map
 /.nuxtg-ssr-manifest.json.map.json
+.env
