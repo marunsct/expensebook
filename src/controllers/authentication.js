@@ -1,6 +1,9 @@
+const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const { pool } = require('../db');
 const { User } = require('../models/Users');
+
+const SECRET_KEY = process.env.JWT_SECRET || 'your_secret_key'; // Use a secure key from .env
 
 // User registration handler
 const registerUser = async (req, res) => {
@@ -38,6 +41,7 @@ const registerUser = async (req, res) => {
 
 // User login handler
 const loginUser = async (req, res) => {
+    console.log('Login request:', req.body, req); // Log the request body for debugging
     const { email, phone, password } = req.body;
 
     if (!email && !phone) {
@@ -63,7 +67,16 @@ const loginUser = async (req, res) => {
             return res.status(401).json({ error: req.__('errors.invalid_credentials') });
         }
 
-        res.status(200).json({ message: 'Login successful.' });
+        // Generate a JWT token
+        const token = jwt.sign({ userId: user.id, email: user.email }, SECRET_KEY, { expiresIn: '10000' });
+
+        // Save the token in the tokens table
+        await pool.query(
+            'INSERT INTO tokens (user_id, token) VALUES ($1, $2)',
+            [user.id, token]
+        );
+
+        res.status(200).json({ message: req.__('messages.login_success'), token });
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: req.__('errors.login_error') });
