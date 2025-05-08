@@ -17,8 +17,30 @@ class Group {
     static async addUser(client, groupId, userId, created_by) {
         await client.query('INSERT INTO group_users (group_id, user_id) VALUES ($1, $2)', [groupId, userId, created_by]);
     }
+
+    // Check if the user has open expenses in the group
+    static async hasOpenExpenses(client, groupId, userId) {
+        const res = await client.query(
+            `SELECT e.id
+             FROM expenses e
+             INNER JOIN expense_users eu ON e.id = eu.expense_id
+             WHERE e.group_id = $1 AND eu.user_id = $2 AND e.flag = FALSE AND e.delete_flag = FALSE`,
+            [groupId, userId]
+        );
+        return res.rows.length > 0; // Return true if there are open expenses
+    }
+
+    // Mark the user as deleted in the group_users table
+    static async deleteUserFromGroup(client, groupId, userId) {
+        await client.query(
+            `UPDATE group_users
+             SET delete_flag = TRUE
+             WHERE group_id = $1 AND user_id = $2`,
+            [groupId, userId]
+        );
+    }
 }
 
 module.exports = {
-    Group
+    Group,
 };

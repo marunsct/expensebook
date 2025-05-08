@@ -21,11 +21,11 @@ const getUserDetails = async (req, res) => {
     const { userId } = req.params;
 
     try {
-        const userDetails = await User.getUserDetails(pool, userId);
+        const userDetails = await User.getUserDetails(pool, userId, req);
         res.status(200).json(userDetails);
     } catch (error) {
         console.error(error);
-        res.status(500).json({ error: req.__('errors.user_details_error') });
+        res.status(500).json({ error: error.message });
     }
 };
 
@@ -34,18 +34,21 @@ const getUserBalances = async (req, res) => {
     const { userId } = req.params;
 
     try {
-        const balances = await User.getUserBalances(pool, userId);
+        const balances = await User.getUserBalances(pool, userId, req);
         res.status(200).json(balances);
     } catch (error) {
         console.error(error);
-        res.status(500).json({ error: req.__('errors.user_details_error') });
+        res.status(500).json({ error: error.message });
     }
 };
 
-
 // Create an expense
 const createExpense = async (req, res) => {
-    const { description, currency, amount, group_id, split_method, paid_by_user, image, created_by, splits } = req.body;
+    const { description, currency, amount, group_id, split_method, contributors, image, created_by, splits } = req.body;
+
+    if (!description || !currency || !amount || !contributors || !splits) {
+        return res.status(400).json({ error: req.__('errors.missing_expense_fields') });
+    }
 
     try {
         const expense = await Expense.create(
@@ -55,7 +58,7 @@ const createExpense = async (req, res) => {
             amount,
             group_id,
             split_method,
-            paid_by_user,
+            contributors,
             image,
             created_by,
             splits
@@ -63,7 +66,7 @@ const createExpense = async (req, res) => {
         res.status(201).json(expense);
     } catch (error) {
         console.error('Error creating expense:', error);
-        res.status(500).json({ error: 'Error creating expense' });
+        res.status(500).json({ error: req.__('errors.expense_creation_error') });
     }
 };
 
@@ -71,9 +74,20 @@ const createExpense = async (req, res) => {
 const getAllExpenses = async (req, res) => {
     try {
         const expenses = await Expense.getAll(pool);
-        res.status(200).json(expenses);
+
+        // Format the response
+        const formattedExpenses = expenses.map((expense) => ({
+            ...expense,
+            splits: expense.splits.map((split) => ({
+                userId: split.user_id,
+                paidToUser: split.paid_to_user,
+                share: split.share,
+            })),
+        }));
+
+        res.status(200).json(formattedExpenses);
     } catch (error) {
-        console.error(error);
+        console.error('Error fetching expenses:', error);
         res.status(500).json({ error: req.__('errors.expense_fetch_error') });
     }
 };
@@ -124,6 +138,43 @@ const getGroupImages = async (req, res) => {
     }
 };
 
+// Settle up expenses
+const settleUpExpenses = async (req, res) => {
+    const { userId, otherUserId } = req.body;
+
+    try {
+        const result = await Expense.settleUp(pool, userId, otherUserId);
+        res.status(200).json(result);
+    } catch (error) {
+        console.error('Error settling up expenses:', error);
+        res.status(500).json({ error: 'Error settling up expenses.' });
+    }
+};
+
+// Delete a user from a group
+const deleteUserFromGroup = async (req, res) => {
+    const { groupId, userId } = req.params;
+
+    if (!groupId || !userId) {
+        return res.status(400).json({ error: req.__('errors.missing_group_or_user') });
+    }
+
+    try {
+        // Check if the user has open expenses in the group
+        const hasOpenExpenses = await Group.hasOpenExpenses(pool, groupId, userId);
+        if (hasOpenExpenses) {
+            return res.status(400).json({ error: req.__('errors.user_has_open_expenses') });
+        }
+
+        // Mark the user as deleted in the group_users table
+        await Group.deleteUserFromGroup(pool, groupId, userId);
+        res.status(200).json({ message: req.__('messages.user_deleted_from_group') });
+    } catch (error) {
+        console.error('Error deleting user from group:', error);
+        res.status(500).json({ error: req.__('errors.delete_user_from_group_error') });
+    }
+};
+
 module.exports = {
     createGroup,
     getUserDetails,
@@ -133,4 +184,6 @@ module.exports = {
     addUserToGroup,
     uploadGroupImage,
     getGroupImages,
+    settleUpExpenses,
+    deleteUserFromGroup,
 };
