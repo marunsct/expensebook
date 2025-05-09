@@ -2,6 +2,7 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const { pool } = require('../db');
 const { User } = require('../models/Users');
+const nodemailer = require('nodemailer');
 
 const SECRET_KEY = process.env.JWT_SECRET || 'your_secret_key'; // Use a secure key from .env
 
@@ -103,7 +104,100 @@ const loginUser = async (req, res) => {
     }
 };
 
+const changePassword = async (req, res) => {
+    const { userId } = req.params;
+    const { currentPassword, newPassword } = req.body;
+
+    if (!currentPassword || !newPassword) {
+        return res.status(400).json({ error: 'Current password and new password are required.' });
+    }
+
+    try {
+        const result = await User.changePassword(pool, userId, currentPassword, newPassword);
+        res.status(200).json(result);
+    } catch (error) {
+        console.error('Error changing password:', error);
+        res.status(400).json({ error: error.message });
+    }
+};
+
+const inviteUserByEmail = async (req, res) => {
+    const { email } = req.body;
+
+    if (!email) {
+        return res.status(400).json({ error: 'Email is required.' });
+    }
+
+    try {
+        // Generate a random 5-digit password
+        const randomPassword = Math.floor(10000 + Math.random() * 90000).toString();
+
+        // Hash the random password
+        const hashedPassword = await bcrypt.hash(randomPassword, 10);
+
+        // Check if the user already exists or create an invited user
+        const invitedUser = await User.createInvitedUser(pool, email, hashedPassword);
+
+        // Email server Configuration
+        const smtpConfig = {
+            host: process.env.SMTP_HOST,
+            port: process.env.SMTP_PORT,
+            secure: process.env.SMTP_SECURE === 'true', // true for 465, false for other ports
+            auth: {
+                user: process.env.SMTP_USER,
+                pass: process.env.SMTP_PASSWORD,
+            },
+        };
+       
+        // Send an email to the invited user
+        const transporter = nodemailer.createTransport(smtpConfig);
+        console.log('SMTP CONFiG', smtpConfig);
+        const mailOptions = {
+            from: process.env.SMTP_SENDER,
+            to: email,
+            subject: `You’ve been invited to ExpenseBook!`,
+            text: `Your friends have invited you to use ExpenseBook for managing your expenses. Use the temporary password "${randomPassword}" to log in and set up your account.`,
+        };
+
+        await transporter.sendMail(mailOptions);
+
+        res.status(200).json({
+            message: 'Invitation sent successfully.',
+            invitedUser,
+        });
+    } catch (error) {
+        console.error('Error inviting user:', error);
+        res.status(500).json({ error: 'Error inviting user.' });
+    }
+};
+
+const closeAccount = async (req, res) => {
+    const { userId } = req.params;
+
+    try {
+        // Check if the user owes anyone
+        const hasOpenExpenses = await User.hasOpenExpenses(pool, userId);
+        if (hasOpenExpenses) {
+            return res.status(400).json({ error: 'You must settle all open expenses before closing your account.' });
+        }
+
+        // Mark the user as deleted
+        const closedAccount = await User.closeAccount(pool, userId);
+        res.status(200).json({
+            message: 'Account closed successfully.',
+            user: closedAccount,
+        });
+    } catch (error) {
+        console.error('Error closing account:', error);
+        res.status(500).json({ error: 'Error closing account.' });
+    }
+};
+
+
 module.exports = {
     registerUser,
     loginUser,
+    changePassword,
+    inviteUserByEmail,
+    closeAccount,
 };

@@ -1,3 +1,5 @@
+const bcrypt = require('bcrypt');
+
 class User {
   constructor(id, first_name, last_name, username, email, phone) {
     this.id = id;
@@ -223,6 +225,136 @@ class User {
       console.error("Error fetching user balances:", error);
       throw new Error(req.__("errors.fetch_user_balances"));
     }
+  }
+
+  static async updateDetails(client, userId, updates) {
+    const allowedFields = ['first_name', 'last_name', 'username', 'gender', 'date_of_birth', 'country', 'profile_picture'];
+    const fieldsToUpdate = Object.keys(updates).filter((field) => allowedFields.includes(field));
+
+    if (fieldsToUpdate.length === 0) {
+      throw new Error('No valid fields to update.');
+    }
+
+    const setClause = fieldsToUpdate.map((field, index) => `${field} = $${index + 2}`).join(', ');
+    const values = [userId, ...fieldsToUpdate.map((field) => updates[field])];
+
+    const query = `UPDATE users SET ${setClause} WHERE id = $1 RETURNING id, first_name, last_name, username, gender, date_of_birth, country, profile_picture`;
+    const res = await client.query(query, values);
+
+    if (res.rows.length === 0) {
+      throw new Error('User not found.');
+    }
+
+    return res.rows[0];
+  }
+
+  static async changePassword(client, userId, currentPassword, newPassword) {
+    // Fetch the user's current password hash
+    const res = await client.query('SELECT password FROM users WHERE id = $1', [userId]);
+    if (res.rows.length === 0) {
+      throw new Error('User not found.');
+    }
+
+    const hashedPassword = res.rows[0].password;
+
+    // Validate the current password
+    const isPasswordValid = await bcrypt.compare(currentPassword, hashedPassword);
+    if (!isPasswordValid) {
+      throw new Error('Current password is incorrect.');
+    }
+
+    // Ensure the new password is not the same as the current password
+    const isSamePassword = await bcrypt.compare(newPassword, hashedPassword);
+    if (isSamePassword) {
+      throw new Error('New password cannot be the same as the current password.');
+    }
+
+    // Hash the new password
+    const newHashedPassword = await bcrypt.hash(newPassword, 10);
+
+    // Update the password in the database
+    await client.query('UPDATE users SET password = $1 WHERE id = $2', [newHashedPassword, userId]);
+
+    return { message: 'Password updated successfully.' };
+  }
+
+  // Create an invited user
+  static async createInvitedUser(client, email, hashedPassword) {
+    const res = await client.query(
+        `INSERT INTO users (email, password, invited_flag)
+         VALUES ($1, $2, TRUE)
+         ON CONFLICT (email) DO NOTHING
+         RETURNING id, email, invited_flag`,
+        [email, hashedPassword]
+    );
+
+    if (res.rows.length === 0) {
+        const existingUser = await client.query(
+            `SELECT id, email, invited_flag FROM users WHERE email = $1`,
+            [email]
+        );
+        // Update the password in the database
+    await client.query('UPDATE users SET password = $1 WHERE id = $2', [hashedPassword, existingUser.rows[0].id]);
+        return existingUser.rows[0];
+    }
+
+    return res.rows[0];
+  }
+
+  // Update the invited user's status upon signup
+  static async updateInvitedUserToRegular(client, email, updates) {
+    const allowedFields = ['first_name', 'last_name', 'username', 'phone', 'password', 'gender', 'date_of_birth', 'country', 'profile_picture'];
+    const fieldsToUpdate = Object.keys(updates).filter((field) => allowedFields.includes(field));
+
+    if (fieldsToUpdate.length === 0) {
+      throw new Error('No valid fields to update.');
+    }
+
+    const setClause = fieldsToUpdate.map((field, index) => `${field} = $${index + 2}`).join(', ');
+    const values = [email, ...fieldsToUpdate.map((field) => updates[field])];
+
+    const query = `
+      UPDATE users
+      SET ${setClause}, invited_flag = FALSE
+      WHERE email = $1 AND invited_flag = TRUE
+      RETURNING id, first_name, last_name, username, email, phone, gender, date_of_birth, country, profile_picture
+    `;
+    const res = await client.query(query, values);
+
+    if (res.rows.length === 0) {
+      throw new Error('Invited user not found or already signed up.');
+    }
+
+    return res.rows[0];
+  }
+
+  // Check if the user owes anyone
+  static async hasOpenExpenses(client, userId) {
+    const res = await client.query(
+        `SELECT SUM(eu.share) AS total_owed
+         FROM expense_users eu
+         WHERE eu.user_id = $1 AND eu.flag = FALSE`,
+        [userId]
+    );
+
+    return parseFloat(res.rows[0].total_owed) > 0; // Return true if the user owes money
+  }
+
+  // Mark the user as deleted
+  static async closeAccount(client, userId) {
+    const res = await client.query(
+        `UPDATE users
+         SET delete_flag = TRUE
+         WHERE id = $1
+         RETURNING id, email, delete_flag`,
+        [userId]
+    );
+
+    if (res.rows.length === 0) {
+        throw new Error('User not found.');
+    }
+
+    return res.rows[0];
   }
 }
 

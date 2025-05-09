@@ -15,7 +15,13 @@ class Group {
     }
 
     static async addUser(client, groupId, userId, created_by) {
-        await client.query('INSERT INTO group_users (group_id, user_id) VALUES ($1, $2)', [groupId, userId, created_by]);
+        // Check if the user is marked as deleted
+        const userRes = await client.query('SELECT delete_flag FROM users WHERE id = $1', [userId]);
+        if (userRes.rows.length === 0 || userRes.rows[0].delete_flag) {
+            throw new Error('Cannot add a deleted user to a group.');
+        }
+
+        await client.query('INSERT INTO group_users (group_id, user_id, created_by) VALUES ($1, $2, $3)', [groupId, userId, created_by]);
     }
 
     // Check if the user has open expenses in the group

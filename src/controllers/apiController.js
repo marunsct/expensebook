@@ -29,6 +29,21 @@ const getUserDetails = async (req, res) => {
     }
 };
 
+// Update user details
+const updateUserDetails = async (req, res) => {
+    const { userId } = req.params;
+    const updates = req.body;
+
+    try {
+        // Ensure the user is only updating allowed fields
+        const updatedUser = await User.updateDetails(pool, userId, updates);
+        res.status(200).json(updatedUser);
+    } catch (error) {
+        console.error('Error updating user details:', error);
+        res.status(400).json({ error: error.message });
+    }
+};
+
 // Get user balances
 const getUserBalances = async (req, res) => {
     const { userId } = req.params;
@@ -178,6 +193,7 @@ const deleteUserFromGroup = async (req, res) => {
 module.exports = {
     createGroup,
     getUserDetails,
+    updateUserDetails,
     getUserBalances,
     createExpense,
     getAllExpenses,

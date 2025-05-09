@@ -15,6 +15,17 @@ class Expense {
     }
 
     static async create(client, description, currency, amount, group_id, split_method, contributors, image, created_by, splits) {
+        // Check if any contributor is marked as deleted
+        const contributorIds = contributors.map((contributor) => contributor.userId);
+        const res = await client.query(
+            `SELECT id FROM users WHERE id = ANY($1::int[]) AND delete_flag = TRUE`,
+            [contributorIds]
+        );
+
+        if (res.rows.length > 0) {
+            throw new Error('Cannot add deleted users to an expense.');
+        }
+
         // If a group is provided, check if the group exists
         if (group_id) {
             const groupRes = await client.query('SELECT * FROM groups WHERE id = $1', [group_id]);
