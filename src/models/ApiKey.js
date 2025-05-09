@@ -21,6 +21,19 @@ class ApiKey {
         const res = await client.query('SELECT * FROM api_keys WHERE api_key = $1', [apiKey]);
         return res.rows.length > 0; // Return true if the API key exists
     }
+
+    static async getByConsumerName(client, consumerName) {
+        const res = await client.query(
+            'SELECT api_key FROM api_keys WHERE consumer_name = $1',
+            [consumerName]
+        );
+
+        if (res.rows.length === 0) {
+            throw new Error('API key not found for the provided consumer name.');
+        }
+
+        return res.rows[0].api_key;
+    }
 }
 
 module.exports = {
