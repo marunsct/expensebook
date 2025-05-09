@@ -1,23 +1,13 @@
-const express = require('express');
-const validateApiKey = require('../middleware/apiKeyAuth');
-const authenticateToken = require('../middleware/auth');
-const loginController = require('../controllers/authentication');
-const apiController = require('../controllers/apiController');
-const apiKeyController = require('../controllers/apiKeyController');
-const { deleteUserFromGroup } = require('../controllers/apiController');
-
+// This file defines the API routes for the application.
 // Import the Express.js framework
 const express = require('express');
-
 // Import middleware functions for API key validation and JWT authentication
 const validateApiKey = require('../middleware/apiKeyAuth');
 const authenticateToken = require('../middleware/auth');
-
 // Import controller functions for handling requests
 const loginController = require('../controllers/authentication');
 const apiController = require('../controllers/apiController');
 const apiKeyController = require('../controllers/apiKeyController');
-
 // Import a specific function from the apiController
 const { deleteUserFromGroup } = require('../controllers/apiController');
 
