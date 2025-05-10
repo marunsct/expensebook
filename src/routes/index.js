@@ -6,10 +6,13 @@ const validateApiKey = require('../middleware/apiKeyAuth');
 const authenticateToken = require('../middleware/auth');
 // Import controller functions for handling requests
 const loginController = require('../controllers/authentication');
-const apiController = require('../controllers/apiController');
 const apiKeyController = require('../controllers/apiKeyController');
-// Import a specific function from the apiController
-const { deleteUserFromGroup } = require('../controllers/apiController');
+// Import the userController for user-related operations
+const userController = require('../controllers/userController');
+const expenseController = require('../controllers/expenseController');
+// Import the groupController for group-related operations
+const groupController = require('../controllers/groupController');
+
 
 // Create a new Express router instance
 const router = express.Router();
@@ -38,42 +41,45 @@ router.use(validateApiKey);
 router.post('/users/invite', authenticateToken, loginController.inviteUserByEmail);
 
 // Get a user's details
-router.get('/users/:userId/details', authenticateToken, apiController.getUserDetails);
+router.get('/users/:userId/details', authenticateToken, userController.getUserDetails);
+
+// Get all users update or created after a specific date
+router.get('/users/updated-after/:date', authenticateToken, userController.getUsersUpdatedAfter);
 
 // Get a user's balances
-router.get('/users/:userId/balances', authenticateToken, apiController.getUserBalances);
+router.get('/users/:userId/balances', authenticateToken, userController.getUserBalances);
 
 // Update a user's details
-router.put('/users/:userId', authenticateToken, apiController.updateUserDetails);
+router.put('/users/:userId', authenticateToken, userController.updateUserDetails);
 
 // Close a user's account
 router.delete('/users/:userId/close-account', authenticateToken, loginController.closeAccount);
 
 // API For Groups
 // Create a new group
-router.post('/groups', authenticateToken, apiController.createGroup);
+router.post('/groups', authenticateToken, groupController.createGroup);
 
 // Add a user to a group
-router.post('/groups/:groupId/users', authenticateToken, apiController.addUserToGroup);
+router.post('/groups/:groupId/users', authenticateToken, groupController.addUserToGroup);
 
 // Upload an image for a group
-router.post('/groups/:groupId/images', authenticateToken, apiController.uploadGroupImage);
+router.post('/groups/:groupId/images', authenticateToken, groupController.uploadGroupImage);
 
 // Get images for a group
-router.get('/groups/:groupId/images', authenticateToken, apiController.getGroupImages);
+router.get('/groups/:groupId/images', authenticateToken, groupController.getGroupImages);
 
 // Remove a user from a group
-router.delete('/groups/:groupId/users/:userId', authenticateToken, deleteUserFromGroup);
+router.delete('/groups/:groupId/users/:userId', authenticateToken, groupController.deleteUserFromGroup);
 
 // API For Expenses
 // Create a new expense
-router.post('/expenses', authenticateToken, apiController.createExpense);
+router.post('/expenses', authenticateToken, expenseController.createExpense);
 
 // Get all expenses
-router.get('/expenses', authenticateToken, apiController.getAllExpenses);
+router.get('/expenses', authenticateToken, expenseController.getAllExpenses);
 
 // Settle up expenses
-router.post('/expenses/settle-up', authenticateToken, apiController.settleUpExpenses);
+router.post('/expenses/settle-up', authenticateToken, expenseController.settleUpExpenses);
 
 // Export the router instance
 module.exports = router;

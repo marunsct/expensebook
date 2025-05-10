@@ -322,7 +322,7 @@ class User {
         `SELECT id, email, invited_flag FROM users WHERE email = $1`,
         [email]
       );
-    
+
       // Update the password in the database
       await client.query(
         "UPDATE users SET password = $1, delete_flag = $3 WHERE id = $2",
@@ -402,6 +402,15 @@ class User {
     }
 
     return res.rows[0];
+  }
+
+  static async getAllUsers(client, date) {
+    const res = await client.query(
+      `SELECT id , first_name ,last_name , email, phone FROM  users WHERE 
+          (created_at >= $1 OR updated_at >= $1)
+          AND deleted = FALSE`, [date] );
+
+    return res.rows;
   }
 }
 
