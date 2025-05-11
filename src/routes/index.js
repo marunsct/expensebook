@@ -44,7 +44,7 @@ router.post('/users/invite', authenticateToken, loginController.inviteUserByEmai
 router.get('/users/:userId/details', authenticateToken, userController.getUserDetails);
 
 // Get all users update or created after a specific date
-router.get('/users/updated-after/:date', authenticateToken, userController.getUsersUpdatedAfter);
+router.get('/users/updated-after/:date', authenticateToken, userController.getUsersAfterDate);
 
 // Get a user's balances
 router.get('/users/:userId/balances', authenticateToken, userController.getUserBalances);
