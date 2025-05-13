@@ -405,10 +405,15 @@ class User {
   }
 
   static async getAllUsers(client, date) {
+    console.log("Fetching all users updated or created after:", date);
+    // Validate the date format 
+    if (!date || isNaN(Date.parse(date))) {
+      throw new Error("Invalid date format.");
+    }
     const res = await client.query(
-      `SELECT id , first_name ,last_name , email, phone FROM  users WHERE 
+      `SELECT id , first_name ,last_name , username, email, phone FROM  users WHERE 
           (created_at >= $1 OR updated_at >= $1)
-          AND deleted = FALSE`, [date] );
+          AND delete_flag = FALSE`, [date] );
 
     return res.rows;
   }

@@ -45,7 +45,7 @@ const getUserBalances = async (req, res) => {
 
 // Get all users updated / created after a specific date
 const getUsersAfterDate = async (req, res) => {
-    const { date } =  req.params.date;
+    const { date } =  req.params;
 
     try {
         const users = await User.getAllUsers(pool, date);
