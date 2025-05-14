@@ -66,9 +66,32 @@ const settleUpExpenses = async (req, res) => {
     }
 };
 
+const getUnsettledExpenses = async (req, res) => {
+  try {
+    const userId = req.params.userId;
+    const expenses = await Expense.getUnsettledExpenses(pool,userId);
+    res.json(expenses);
+  } catch (err) {
+    console.error('Error fetching unsettled expenses:', err);
+    res.status(500).json({ message: 'Error fetching expenses' });
+  }
+};
+
+const getUnsettledExpensesAfterDate = async (req, res) => {
+  try {
+    const userId = req.params.userId;
+    const date = req.params.date;
+    const expenses = await Expense.getUnsettledExpensesAfterDate(pool,userId, date);
+    res.json(expenses);
+  } catch (err) {
+    res.status(500).json({ message: 'Error fetching expenses' });
+  }
+};
 
 module.exports = {
     createExpense,
     getAllExpenses,
     settleUpExpenses,
+    getUnsettledExpenses,
+    getUnsettledExpensesAfterDate
 };

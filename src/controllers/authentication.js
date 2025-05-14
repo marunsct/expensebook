@@ -171,6 +171,18 @@ const inviteUserByEmail = async (req, res) => {
     }
 };
 
+/**
+ * Closes a user's account after ensuring all open expenses are settled.
+ * 
+ * @param {Object} req - The request object, containing user parameters.
+ * @param {Object} res - The response object for sending back the HTTP response.
+ * 
+ * @throws Will return a 400 error if the user has open expenses.
+ * @throws Will return a 500 error if there is an issue closing the account.
+ * 
+ * @returns {Object} A success message and the closed account details if successful.
+ */
+
 const closeAccount = async (req, res) => {
     const { userId } = req.params;
 

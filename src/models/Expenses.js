@@ -192,6 +192,88 @@ class Expense {
             throw new Error('Error settling up expenses.');
         }
     }
+
+    /**
+     * Retrieves all unsettled expenses for a given user.
+     * @param {Object} client - The database client.
+     * @param {Number} userId - The ID of the user whose unsettled expenses to fetch.
+     * @returns {Promise<Object[]>} A promise that resolves to an array of unsettled expenses.
+     *  Each expense is an object with the following properties:
+     *  - expense_id (Number)
+     *  - description (String)
+     *  - currency (String)
+     *  - amount (Number)
+     *  - groupId (Number|null)
+     *  - splitMethod (String)
+     *  - paidByUser (Number)
+     *  - image (String|null)
+     *  - createdBy (Number)
+     *  - splits (Object[])
+     *    - user_id (Number)
+     *    - paid_to_user (Number)
+     *    - share (Number)
+     */
+    static async getUnsettledExpenses(client, userId) {
+        const res = await client.query(
+            `SELECT e.id, e.description, e.currency, e.amount, e.group_id, e.split_method, e.paid_by_user, e.image_url, e.created_by,
+                    json_agg(
+                        json_build_object(
+                            'user_id', eu.user_id,
+                            'paid_to_user', eu.paid_to_user,
+                            'share', eu.share
+                        )
+                    ) AS splits
+             FROM expenses e
+             LEFT JOIN expense_users eu ON e.id = eu.expense_id
+             WHERE (eu.user_id = $1 OR eu.paid_to_user = $1) AND eu.flag = false and e.delete_flag = false
+             GROUP BY e.id`,
+            [userId]
+        );
+
+        return res.rows.map((row) => ({
+            expense_id: row.id,
+            description: row.description,
+            currency: row.currency,
+            amount: row.amount,
+            groupId: row.group_id,
+            splitMethod: row.split_method,
+            paidByUser: row.paid_by_user,
+            image: row.image_url? true : false, // TODO: check if image is present ,
+            createdBy: row.created_by,
+            splits: row.splits || [],
+        }));
+    }
+
+    static async getUnsettledExpensesAfterDate(client, userId, date) {
+            const res = await client.query(
+                `SELECT e.id, e.description, e.currency, e.amount, e.group_id, e.split_method, e.paid_by_user, e.image_url, e.created_by,
+                        json_agg(
+                            json_build_object(
+                                'user_id', eu.user_id,
+                                'paid_to_user', eu.paid_to_user,
+                                'share', eu.share
+                            )
+                        ) AS splits
+                 FROM expenses e
+                 LEFT JOIN expense_users eu ON e.id = eu.expense_id
+                 WHERE (eu.user_id = $1 OR eu.paid_to_user = $1) AND eu.flag = false and e.delete_flag = false and (e.created_at > $1 or e.updated_at > $1 or e.updated_at or eu.created_at > $1 or eu.updated_at > $1) 
+                 GROUP BY e.id`,
+                [userId, date]
+            );
+
+        return res.rows.map((row) => ({
+            expense_id: row.id,
+            description: row.description,
+            currency: row.currency,
+            amount: row.amount,
+            groupId: row.group_id,
+            splitMethod: row.split_method,
+            paidByUser: row.paid_by_user,
+            image: row.image_url ? true : false, // TODO: check if image is present 
+            createdBy: row.created_by,
+            splits: row.splits || [],
+        }));
+    }
 }
 
 module.exports = {

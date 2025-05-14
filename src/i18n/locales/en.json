@@ -1,24 +1,25 @@
 {
-    "errors": {
-        "email_or_phone_required": "Email or phone number is required.",
-        "user_exists": "User already exists with the provided email or phone number.",
-        "registration_error": "Error registering user.",
-        "user_not_found": "User not found.",
-        "invalid_credentials": "Invalid credentials.",
-        "login_error": "Error logging in.",
-        "missing_expense_fields": "Missing required fields for creating the expense.",
-        "expense_creation_error": "Error creating the expense.",
-        "expense_fetch_error": "Error fetching expenses.",
-        "missing_group_or_user": "Group ID or User ID is missing.",
-        "add_user_to_group_error": "Error adding user to the group.",
-        "fetch_user_details": "Error fetching user details.",
-        "fetch_user_balances": "Error fetching user balances.",
-        "user_has_open_expenses": "The user has open expenses in the group and cannot be removed.",
-        "delete_user_from_group_error": "Error deleting user from the group."
-    },
-    "messages": {
-        "login_success": "Login successful.",
-        "user_added_to_group": "User successfully added to the group.",
-        "user_deleted_from_group": "User successfully deleted from the group."
-    }
+	"errors": {
+		"email_or_phone_required": "Email or phone number is required.",
+		"user_exists": "User already exists with the provided email or phone number.",
+		"registration_error": "Error registering user.",
+		"user_not_found": "User not found.",
+		"invalid_credentials": "Invalid credentials.",
+		"login_error": "Error logging in.",
+		"missing_expense_fields": "Missing required fields for creating the expense.",
+		"expense_creation_error": "Error creating the expense.",
+		"expense_fetch_error": "Error fetching expenses.",
+		"missing_group_or_user": "Group ID or User ID is missing.",
+		"add_user_to_group_error": "Error adding user to the group.",
+		"fetch_user_details": "Error fetching user details.",
+		"fetch_user_balances": "Error fetching user balances.",
+		"user_has_open_expenses": "The user has open expenses in the group and cannot be removed.",
+		"delete_user_from_group_error": "Error deleting user from the group.",
+		"fetch_user_groups_error": "errors.fetch_user_groups_error"
+	},
+	"messages": {
+		"login_success": "Login successful.",
+		"user_added_to_group": "User successfully added to the group.",
+		"user_deleted_from_group": "User successfully deleted from the group."
+	}
 }

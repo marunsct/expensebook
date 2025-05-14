@@ -84,10 +84,23 @@ const deleteUserFromGroup = async (req, res) => {
     }
 };
 
+const getUserGroups = async (req, res) => {
+    const { userId } = req.params;
+
+    try {
+        const groups = await Group.getUserGroups(pool, userId);
+        res.status(200).json(groups);
+    } catch (error) {
+        console.error('Error fetching user groups:', error);
+        res.status(500).json({ error: req.__('errors.fetch_user_groups_error') });
+    }
+};
+
 module.exports = {
     createGroup,
     addUserToGroup,
     uploadGroupImage,
     getGroupImages,
     deleteUserFromGroup,
+    getUserGroups,
 };

@@ -71,6 +71,9 @@ router.get('/groups/:groupId/images', authenticateToken, groupController.getGrou
 // Remove a user from a group
 router.delete('/groups/:groupId/users/:userId', authenticateToken, groupController.deleteUserFromGroup);
 
+// Get all groups for a user
+router.get('/groups/:userId', authenticateToken, groupController.getUserGroups);
+
 // API For Expenses
 // Create a new expense
 router.post('/expenses', authenticateToken, expenseController.createExpense);
@@ -80,6 +83,12 @@ router.get('/expenses', authenticateToken, expenseController.getAllExpenses);
 
 // Settle up expenses
 router.post('/expenses/settle-up', authenticateToken, expenseController.settleUpExpenses);
+
+// Get all expenses for a specific user
+router.get('/expenses/unsettled/:userId', expenseController.getUnsettledExpenses);
+
+// Get all expenses for a specific user after a specific date
+router.get('/expenses/unsettledAfter/:userId/:date', expenseController.getUnsettledExpensesAfterDate);
 
 // Export the router instance
 module.exports = router;
