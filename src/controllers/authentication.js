@@ -70,7 +70,7 @@ const loginUser = async (req, res) => {
         }
 
         // Generate a JWT token
-        const token = jwt.sign({ userId: user.id, email: user.email }, SECRET_KEY, { expiresIn: '1500h' });
+        const token = jwt.sign({ userId: user.id, email: user.email }, SECRET_KEY);
 
         // Save the token in the tokens table
         await pool.query(

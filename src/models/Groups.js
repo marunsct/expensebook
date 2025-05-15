@@ -56,7 +56,7 @@ class Group {
       [groupId, userId]
     );
   }
-
+/*
   static async getUserGroups(client, userId) {
     const groupsRes = await client.query(
       `SELECT g.id, g.name, g.currency, gi.image_url, g.created_by
@@ -114,6 +114,62 @@ class Group {
 
     return result;
   }
+  */
+ static async getUserGroups(client, userId) {
+  const groupsRes = await client.query(
+    `SELECT g.id, g.name, g.currency, gi.image_url, g.created_by
+     FROM groups g
+     INNER JOIN group_users gu ON g.id = gu.group_id
+     LEFT JOIN group_images gi ON g.id = gi.group_id AND gi.delete_flag = FALSE
+     WHERE gu.user_id = $1 AND g.delete_flag = FALSE`,
+    [userId]
+  );
+
+  const groups = groupsRes.rows;
+
+  const result = await Promise.all(groups.map(async (group) => {
+    const groupData = { ...group };
+
+    // Get group members
+    const membersRes = await client.query(
+      `SELECT u.id, u.first_name
+       FROM users u
+       INNER JOIN group_users gu ON u.id = gu.user_id
+       WHERE gu.group_id = $1 AND u.delete_flag = FALSE`,
+      [group.id]
+    );
+    groupData.members = membersRes.rows;
+
+    // Get group expenses
+    const expensesRes = await client.query(
+      `SELECT e.id, e.description, e.currency, e.amount, e.split_method, e.paid_by_user, e.image_url, e.created_by
+       FROM expenses e
+       WHERE e.group_id = $1 AND e.delete_flag = FALSE AND e.flag = FALSE`,
+      [group.id]
+    );
+    const expenses = expensesRes.rows;
+
+    groupData.expenses = await Promise.all(expenses.map(async (expense) => {
+      const expenseData = { ...expense };
+
+      // Get expense splits
+      const splitsRes = await client.query(
+        `SELECT eu.user_id, eu.paid_to_user, eu.share
+         FROM expense_users eu
+         WHERE eu.expense_id = $1 AND eu.flag = FALSE AND eu.user_id != eu.paid_to_user`,
+        [expense.id]
+      );
+
+      expenseData.splits = splitsRes.rows;
+      return expenseData;
+    }));
+
+    return groupData;
+  }));
+
+  return result;
+}
+
 }
 module.exports = {
   Group,
