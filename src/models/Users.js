@@ -417,6 +417,19 @@ class User {
 
     return res.rows;
   }
+
+  // get all expense between two users
+  static async getAllExpenseBetweenUsers(client, userId1, userId2) {
+    const res = await client.query(
+      `SELECT e.id, e.description, e.currency, e.amount, e.group_id, e.split_method, e.paid_by_user, e.image_url, e.created_at
+         FROM expenses e
+         INNER JOIN expense_users eu ON e.id = eu.expense_id
+         WHERE (eu.user_id = $1 OR eu.user_id = $2) AND (eu.paid_to_user = $1 OR eu.paid_to_user = $2)`,
+      [userId1, userId2]
+    );
+
+    return res.rows;
+  }
 }
 
 module.exports = {
