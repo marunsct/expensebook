@@ -55,9 +55,9 @@ CREATE TABLE IF NOT EXISTS expenses (
     amount NUMERIC(10, 2) NOT NULL,
     group_id INT REFERENCES groups(id) ON DELETE CASCADE,
     split_method VARCHAR(50) NOT NULL,
-    paid_by_user INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    paid_by_user INT NULL REFERENCES users(id) ON DELETE CASCADE,
     image_url TEXT,
-    flag BOOLEAN DEFAULT FALSE,
+    flag BOOLEAN DEFAULT FALSE, -- expense settled flag
     created_by INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -71,7 +71,8 @@ CREATE TABLE IF NOT EXISTS expense_users (
     user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     paid_to_user INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     share NUMERIC(10, 2) NOT NULL,
-    flag BOOLEAN DEFAULT FALSE,
+    counter NUMERIC(10, 2),
+    flag BOOLEAN DEFAULT FALSE, -- expense splits settled flag
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     delete_flag BOOLEAN DEFAULT FALSE

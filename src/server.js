@@ -18,9 +18,9 @@ app.use((req, res, next) => {
     next();
 });
 connectToDatabase();
-//seedLargeDataset()
-//    .then(() => console.log('Seeding completed.'))
-//    .catch((error) => console.error('Seeding failed:', error));// Seed the database with initial data
+seedLargeDataset()
+    .then(() => console.log('Seeding completed.'))
+    .catch((error) => console.error('Seeding failed:', error));// Seed the database with initial data
 
 app.use('/', userRoutes);
 

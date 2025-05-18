@@ -1,3 +1,4 @@
+const { Expense } = require('../models/Expenses');
 class Group {
   constructor(id, name, currency, created_by) {
     this.id = id;
