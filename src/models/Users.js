@@ -59,7 +59,7 @@ class User {
         email || null,
         phone || null,
         hashedPassword,
-        created_by // updated_by (nullable)
+        created_by, // updated_by (nullable)
       ]
     );
     return new User(
@@ -263,7 +263,8 @@ class User {
       query += `, updated_by = $${values.length + 1}`;
       values.push(updated_by);
     }
-    query += " WHERE id = $1 RETURNING id, first_name, last_name, username, gender, date_of_birth, country, profile_picture, updated_by, updated_at, delete_flag, deleted_at";
+    query +=
+      " WHERE id = $1 RETURNING id, first_name, last_name, username, gender, date_of_birth, country, profile_picture, updated_by, updated_at, delete_flag, deleted_at";
     const res = await client.query(query, values);
 
     if (res.rows.length === 0) {
@@ -413,14 +414,16 @@ class User {
 
   static async getAllUsers(client, date) {
     console.log("Fetching all users updated or created after:", date);
-    // Validate the date format 
+    // Validate the date format
     if (!date || isNaN(Date.parse(date))) {
       throw new Error("Invalid date format.");
     }
     const res = await client.query(
       `SELECT id , first_name ,last_name , username, email, phone FROM  users WHERE 
           (created_at >= $1 OR updated_at >= $1)
-          AND delete_flag = FALSE`, [date] );
+          AND delete_flag = FALSE`,
+      [date]
+    );
 
     return res.rows;
   }
@@ -443,7 +446,8 @@ class User {
     // Fetch user details (exclude deleted users)
     const userRes = await client.query(
       `SELECT id, first_name, last_name, username, email, phone, gender, date_of_birth, country, profile_picture, created_at, updated_at
-       FROM users WHERE id = $1 AND delete_flag = FALSE`, [userId]
+       FROM users WHERE id = $1 AND delete_flag = FALSE`,
+      [userId]
     );
     if (userRes.rows.length === 0) return null;
     const userDetails = userRes.rows[0];
@@ -452,19 +456,21 @@ class User {
     const groupsRes = await client.query(
       `SELECT g.* FROM groups g
        INNER JOIN group_users gu ON g.id = gu.group_id
-       WHERE gu.user_id = $1`, [userId]
+       WHERE gu.user_id = $1`,
+      [userId]
     );
     const Groups = groupsRes.rows;
 
     // Fetch all group members for these groups
-    const groupIds = Groups.map(g => g.id);
+    const groupIds = Groups.map((g) => g.id);
     let groupMembers = [];
     if (groupIds.length > 0) {
       const membersRes = await client.query(
         `SELECT gu.id, gu.group_id, u.id as user_id, u.first_name, u.last_name, u.username, u.email, u.phone, gu.joined_at, gu.delete_flag
          FROM group_users gu
          INNER JOIN users u ON gu.user_id = u.id
-         WHERE gu.group_id = ANY($1)`, [groupIds]
+         WHERE gu.group_id = ANY($1)`,
+        [groupIds]
       );
       groupMembers = membersRes.rows;
     }
@@ -473,16 +479,18 @@ class User {
     const expensesRes = await client.query(
       `SELECT DISTINCT e.* FROM expenses e
        INNER JOIN expense_users eu ON e.id = eu.expense_id
-       WHERE eu.user_id = $1 OR eu.paid_to_user = $1`, [userId]
+       WHERE eu.user_id = $1 OR eu.paid_to_user = $1`,
+      [userId]
     );
     const expenses = expensesRes.rows;
 
     // Fetch all expense splits (including deleted/settled) for those expenses
-    const expenseIds = expenses.map(e => e.id);
+    const expenseIds = expenses.map((e) => e.id);
     let expenseSplits = [];
     if (expenseIds.length > 0) {
       const splitsRes = await client.query(
-        `SELECT * FROM expense_users WHERE expense_id = ANY($1)`, [expenseIds]
+        `SELECT * FROM expense_users WHERE expense_id = ANY($1)`,
+        [expenseIds]
       );
       expenseSplits = splitsRes.rows;
     }
@@ -493,6 +501,9 @@ class User {
   // Get all data for a user after a date (including deleted/settled expenses/splits, but not for deleted users)
   static async getAllUserDataAfterDate(client, userId, date) {
     // Fetch user details (exclude deleted users)
+    if (!date || isNaN(Date.parse(date))) {
+      throw new Error("Invalid date format.");
+    }
     const userRes = await client.query(
       `SELECT id, first_name, last_name, username, email, phone, gender, date_of_birth, country, profile_picture, created_at, updated_at
        FROM users WHERE id = $1 AND delete_flag = FALSE
@@ -512,14 +523,15 @@ class User {
     const Groups = groupsRes.rows;
 
     // Fetch all group members for these groups
-    const groupIds = Groups.map(g => g.id);
+    const groupIds = Groups.map((g) => g.id);
     let groupMembers = [];
     if (groupIds.length > 0) {
       const membersRes = await client.query(
         `SELECT gu.group_id, u.id as user_id, u.first_name, u.last_name, u.username, u.email, u.phone, gu.joined_at, gu.delete_flag
          FROM group_users gu
          INNER JOIN users u ON gu.user_id = u.id
-         WHERE gu.group_id = ANY($1)`, [groupIds]
+         WHERE gu.group_id = ANY($1)`,
+        [groupIds]
       );
       groupMembers = membersRes.rows;
     }
@@ -534,7 +546,7 @@ class User {
     const expenses = expensesRes.rows;
 
     // Fetch all expense splits (including deleted/settled) for those expenses, created/updated after date
-    const expenseIds = expenses.map(e => e.id);
+    const expenseIds = expenses.map((e) => e.id);
     let expenseSplits = [];
     if (expenseIds.length > 0) {
       const splitsRes = await client.query(

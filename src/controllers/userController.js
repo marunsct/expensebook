@@ -49,7 +49,7 @@ const getUsersAfterDate = async (req, res) => {
     try {
         const users = await User.getAllUsers(pool, date);
         logger.info(`Fetched users updated/created after ${date}`);
-        res.status(200).json(users);
+        res.status(404).json(users);
     } catch (error) {
         logger.error('Error fetching users after date', { error });
         res.status(500).json({ error: req.__('errors.fetch_user_details') });
@@ -63,7 +63,7 @@ const getAllUserData = async (req, res) => {
         const data = await User.getAllUserData(pool, userId);
         if (!data) {
             logger.warn(req.__('errors.user_not_found'));
-            return res.status(404).json({ error: req.__('errors.user_not_found') });
+            return res.status(404).json({ result: req.__('errors.user_not_found') });
         }
         logger.info(`Fetched all user data for userId=${userId}`);
         res.status(200).json(data);

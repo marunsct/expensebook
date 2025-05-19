@@ -7,6 +7,7 @@
     "build": "node server.js",
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node src/server.js",
+    "start-dev": "set PORT=3000&& ngrok http 3000 & node src/server.js",
     "dev": "nodemon src/server.js"
   },
   "repository": {
