@@ -31,7 +31,8 @@ class User {
     username,
     email,
     phone,
-    hashedPassword
+    hashedPassword,
+    created_by = null // new field
   ) {
     console.log("Creating user:", {
       first_name,
@@ -50,7 +51,7 @@ class User {
       throw new Error("User already exists with this email or phone number.");
     }
     const res = await client.query(
-      "INSERT INTO users (first_name, last_name, username, email, phone, password) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *",
+      "INSERT INTO users (first_name, last_name, username, email, phone, password, created_at, updated_at, updated_by, delete_flag, deleted_at) VALUES ($1, $2, $3, $4, $5, $6, DEFAULT, DEFAULT, $7, DEFAULT, DEFAULT) RETURNING *",
       [
         first_name,
         last_name,
@@ -58,6 +59,7 @@ class User {
         email || null,
         phone || null,
         hashedPassword,
+        created_by // updated_by (nullable)
       ]
     );
     return new User(
@@ -234,7 +236,7 @@ class User {
     }
   }
 
-  static async updateDetails(client, userId, updates) {
+  static async updateDetails(client, userId, updates, updated_by = null) {
     const allowedFields = [
       "first_name",
       "last_name",
@@ -256,8 +258,12 @@ class User {
       .map((field, index) => `${field} = $${index + 2}`)
       .join(", ");
     const values = [userId, ...fieldsToUpdate.map((field) => updates[field])];
-
-    const query = `UPDATE users SET ${setClause} WHERE id = $1 RETURNING id, first_name, last_name, username, gender, date_of_birth, country, profile_picture`;
+    let query = `UPDATE users SET ${setClause}`;
+    if (updated_by !== null) {
+      query += `, updated_by = $${values.length + 1}`;
+      values.push(updated_by);
+    }
+    query += " WHERE id = $1 RETURNING id, first_name, last_name, username, gender, date_of_birth, country, profile_picture, updated_by, updated_at, delete_flag, deleted_at";
     const res = await client.query(query, values);
 
     if (res.rows.length === 0) {
@@ -388,14 +394,15 @@ class User {
   }
 
   // Mark the user as deleted
-  static async closeAccount(client, userId) {
-    const res = await client.query(
-      `UPDATE users
-         SET delete_flag = TRUE
-         WHERE id = $1
-         RETURNING id, email, delete_flag`,
-      [userId]
-    );
+  static async closeAccount(client, userId, updated_by = null) {
+    let query = `UPDATE users SET delete_flag = TRUE, deleted_at = CURRENT_TIMESTAMP`;
+    const values = [userId];
+    if (updated_by !== null) {
+      query += `, updated_by = $2`;
+      values.push(updated_by);
+    }
+    query += ` WHERE id = $1 RETURNING id, email, delete_flag, deleted_at, updated_by`;
+    const res = await client.query(query, values);
 
     if (res.rows.length === 0) {
       throw new Error("User not found.");
@@ -429,6 +436,115 @@ class User {
     );
 
     return res.rows;
+  }
+
+  // Get all data for a user (including deleted/settled expenses/splits, but not for deleted users)
+  static async getAllUserData(client, userId) {
+    // Fetch user details (exclude deleted users)
+    const userRes = await client.query(
+      `SELECT id, first_name, last_name, username, email, phone, gender, date_of_birth, country, profile_picture, created_at, updated_at
+       FROM users WHERE id = $1 AND delete_flag = FALSE`, [userId]
+    );
+    if (userRes.rows.length === 0) return null;
+    const userDetails = userRes.rows[0];
+
+    // Fetch all groups (including deleted) the user is/was a member of
+    const groupsRes = await client.query(
+      `SELECT g.* FROM groups g
+       INNER JOIN group_users gu ON g.id = gu.group_id
+       WHERE gu.user_id = $1`, [userId]
+    );
+    const Groups = groupsRes.rows;
+
+    // Fetch all group members for these groups
+    const groupIds = Groups.map(g => g.id);
+    let groupMembers = [];
+    if (groupIds.length > 0) {
+      const membersRes = await client.query(
+        `SELECT gu.id, gu.group_id, u.id as user_id, u.first_name, u.last_name, u.username, u.email, u.phone, gu.joined_at, gu.delete_flag
+         FROM group_users gu
+         INNER JOIN users u ON gu.user_id = u.id
+         WHERE gu.group_id = ANY($1)`, [groupIds]
+      );
+      groupMembers = membersRes.rows;
+    }
+
+    // Fetch all expenses (including deleted/settled) the user is/was involved in
+    const expensesRes = await client.query(
+      `SELECT DISTINCT e.* FROM expenses e
+       INNER JOIN expense_users eu ON e.id = eu.expense_id
+       WHERE eu.user_id = $1 OR eu.paid_to_user = $1`, [userId]
+    );
+    const expenses = expensesRes.rows;
+
+    // Fetch all expense splits (including deleted/settled) for those expenses
+    const expenseIds = expenses.map(e => e.id);
+    let expenseSplits = [];
+    if (expenseIds.length > 0) {
+      const splitsRes = await client.query(
+        `SELECT * FROM expense_users WHERE expense_id = ANY($1)`, [expenseIds]
+      );
+      expenseSplits = splitsRes.rows;
+    }
+
+    return { userDetails, Groups, groupMembers, expenses, expenseSplits };
+  }
+
+  // Get all data for a user after a date (including deleted/settled expenses/splits, but not for deleted users)
+  static async getAllUserDataAfterDate(client, userId, date) {
+    // Fetch user details (exclude deleted users)
+    const userRes = await client.query(
+      `SELECT id, first_name, last_name, username, email, phone, gender, date_of_birth, country, profile_picture, created_at, updated_at
+       FROM users WHERE id = $1 AND delete_flag = FALSE
+         AND (created_at >= $2 OR updated_at >= $2)`,
+      [userId, date]
+    );
+    if (userRes.rows.length === 0) return null;
+    const userDetails = userRes.rows[0];
+
+    // Fetch all groups (including deleted) the user is/was a member of, created/updated after date
+    const groupsRes = await client.query(
+      `SELECT g.* FROM groups g
+       INNER JOIN group_users gu ON g.id = gu.group_id
+       WHERE gu.user_id = $1 AND (g.created_at >= $2 OR g.updated_at >= $2)`,
+      [userId, date]
+    );
+    const Groups = groupsRes.rows;
+
+    // Fetch all group members for these groups
+    const groupIds = Groups.map(g => g.id);
+    let groupMembers = [];
+    if (groupIds.length > 0) {
+      const membersRes = await client.query(
+        `SELECT gu.group_id, u.id as user_id, u.first_name, u.last_name, u.username, u.email, u.phone, gu.joined_at, gu.delete_flag
+         FROM group_users gu
+         INNER JOIN users u ON gu.user_id = u.id
+         WHERE gu.group_id = ANY($1)`, [groupIds]
+      );
+      groupMembers = membersRes.rows;
+    }
+    // Fetch all expenses (including deleted/settled) the user is/was involved in, created/updated after date
+    const expensesRes = await client.query(
+      `SELECT DISTINCT e.* FROM expenses e
+       INNER JOIN expense_users eu ON e.id = eu.expense_id
+       WHERE (eu.user_id = $1 OR eu.paid_to_user = $1)
+         AND (e.created_at >= $2 OR e.updated_at >= $2)`,
+      [userId, date]
+    );
+    const expenses = expensesRes.rows;
+
+    // Fetch all expense splits (including deleted/settled) for those expenses, created/updated after date
+    const expenseIds = expenses.map(e => e.id);
+    let expenseSplits = [];
+    if (expenseIds.length > 0) {
+      const splitsRes = await client.query(
+        `SELECT * FROM expense_users WHERE expense_id = ANY($1) AND (created_at >= $2 OR updated_at >= $2)`,
+        [expenseIds, date]
+      );
+      expenseSplits = splitsRes.rows;
+    }
+
+    return { userDetails, Groups, groupMembers, expenses, expenseSplits };
   }
 }
 

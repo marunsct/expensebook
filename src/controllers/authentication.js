@@ -3,16 +3,18 @@ const bcrypt = require('bcrypt');
 const { pool } = require('../db');
 const { User } = require('../models/Users');
 const nodemailer = require('nodemailer');
+const logger = require('../middleware/logger');
 
 const SECRET_KEY = process.env.JWT_SECRET || 'your_secret_key'; // Use a secure key from .env
 
 // User registration handler
 const registerUser = async (req, res) => {
-    console.log('Registering user:', req.body);
+    logger.info('Registering user', { body: req.body });
     // Destructure the request body to get user details
     const { first_name, last_name, username, email, phone, password } = req.body;
 
     if (!email && !phone) {
+        logger.warn(req.__('errors.email_or_phone_required'));
         return res.status(400).json({ error: req.__('errors.email_or_phone_required') });
     }
 
@@ -22,10 +24,10 @@ const registerUser = async (req, res) => {
             ? 'SELECT * FROM users WHERE email = $1'
             : 'SELECT * FROM users WHERE phone = $1';
         const value = email || phone;
-        console.log(await bcrypt.hash("password123", 10));
         const existingUser = await pool.query(existingUserQuery, [value]);
 
         if (existingUser.rows.length > 0) {
+            logger.warn(req.__('errors.user_exists'));
             return res.status(409).json({ error: req.__('errors.user_exists') });
         }
 
@@ -35,9 +37,10 @@ const registerUser = async (req, res) => {
         // Create the user using the User model
         const newUser = await User.create(pool, first_name, last_name, username, email, phone, hashedPassword);
 
+        logger.info(`User registered: ${newUser.id}`);
         res.status(201).json({ userId: newUser.id });
     } catch (error) {
-        console.error(error);
+        logger.error(req.__('errors.registration_error'), { error });
         res.status(500).json({ error: req.__('errors.registration_error') });
     }
 };
@@ -47,6 +50,7 @@ const loginUser = async (req, res) => {
     const { email, phone, password } = req.body;
 
     if (!email && !phone) {
+        logger.warn(req.__('errors.email_or_phone_required'));
         return res.status(400).json({ error: req.__('errors.email_or_phone_required') });
     }
 
@@ -59,6 +63,7 @@ const loginUser = async (req, res) => {
         const result = await pool.query(query, [value]);
 
         if (result.rows.length === 0) {
+            logger.warn(req.__('errors.user_not_found'));
             return res.status(404).json({ error: req.__('errors.user_not_found') });
         }
 
@@ -66,6 +71,7 @@ const loginUser = async (req, res) => {
         const isPasswordValid = await bcrypt.compare(password, user.password);
 
         if (!isPasswordValid) {
+            logger.warn(req.__('errors.invalid_credentials'));
             return res.status(401).json({ error: req.__('errors.invalid_credentials') });
         }
 
@@ -93,13 +99,14 @@ const loginUser = async (req, res) => {
             created_at: user.created_at,
         };
 
+        logger.info(`User logged in: ${user.id}`);
         res.status(200).json({
             message: req.__('messages.login_success'),
             token,
             user: userInfo,
         });
     } catch (error) {
-        console.error(error);
+        logger.error(req.__('errors.login_error'), { error });
         res.status(500).json({ error: req.__('errors.login_error') });
     }
 };
@@ -109,15 +116,17 @@ const changePassword = async (req, res) => {
     const { currentPassword, newPassword } = req.body;
 
     if (!currentPassword || !newPassword) {
-        return res.status(400).json({ error: 'Current password and new password are required.' });
+        logger.warn(req.__('errors.missing_password_fields') || 'Current password and new password are required.');
+        return res.status(400).json({ error: req.__('errors.missing_password_fields') || 'Current password and new password are required.' });
     }
 
     try {
         const result = await User.changePassword(pool, userId, currentPassword, newPassword);
+        logger.info(`Password changed for userId=${userId}`);
         res.status(200).json(result);
     } catch (error) {
-        console.error('Error changing password:', error);
-        res.status(400).json({ error: error.message });
+        logger.error(req.__('errors.change_password_error') || 'Error changing password', { error });
+        res.status(500).json({ error: req.__('errors.change_password_error') || 'Error changing password.' });
     }
 };
 
@@ -125,7 +134,8 @@ const inviteUserByEmail = async (req, res) => {
     const { email } = req.body;
 
     if (!email) {
-        return res.status(400).json({ error: 'Email is required.' });
+        logger.warn(req.__('errors.email_required') || 'Email is required.');
+        return res.status(400).json({ error: req.__('errors.email_required') || 'Email is required.' });
     }
 
     try {
@@ -161,13 +171,14 @@ const inviteUserByEmail = async (req, res) => {
 
         await transporter.sendMail(mailOptions);
 
+        logger.info(`Invitation sent to ${email}`);
         res.status(200).json({
-            message: 'Invitation sent successfully.',
+            message: req.__('messages.invitation_sent_successfully') || 'Invitation sent successfully.',
             invitedUser,
         });
     } catch (error) {
-        console.error('Error inviting user:', error);
-        res.status(500).json({ error: 'Error inviting user.' });
+        logger.error(req.__('errors.invite_user_error') || 'Error inviting user', { error });
+        res.status(500).json({ error: req.__('errors.invite_user_error') || 'Error inviting user.' });
     }
 };
 
@@ -190,18 +201,20 @@ const closeAccount = async (req, res) => {
         // Check if the user owes anyone
         const hasOpenExpenses = await User.hasOpenExpenses(pool, userId);
         if (hasOpenExpenses) {
-            return res.status(400).json({ error: 'You must settle all open expenses before closing your account.' });
+            logger.warn(req.__('errors.must_settle_expenses') || 'You must settle all open expenses before closing your account.');
+            return res.status(400).json({ error: req.__('errors.must_settle_expenses') || 'You must settle all open expenses before closing your account.' });
         }
 
         // Mark the user as deleted
         const closedAccount = await User.closeAccount(pool, userId);
+        logger.info(`Account closed for userId=${userId}`);
         res.status(200).json({
-            message: 'Account closed successfully.',
+            message: req.__('messages.account_closed_successfully') || 'Account closed successfully.',
             user: closedAccount,
         });
     } catch (error) {
-        console.error('Error closing account:', error);
-        res.status(500).json({ error: 'Error closing account.' });
+        logger.error(req.__('errors.close_account_error') || 'Error closing account', { error });
+        res.status(500).json({ error: req.__('errors.close_account_error') || 'Error closing account.' });
     }
 };
 

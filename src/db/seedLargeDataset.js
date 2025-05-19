@@ -98,12 +98,28 @@ const seedLargeDataset = async () => {
         console.log('Inserting expense splits...');
         const expenseSplitPromises = [];
         for (let expenseId = 1; expenseId <= 50; expenseId++) {
+            // Determine split_method for this expense
+            // For demo: alternate between 'equal', 'parts', 'percentage', 'custom'
+            let splitMethod;
+            if (expenseId % 4 === 1) splitMethod = 'equal';
+            else if (expenseId % 4 === 2) splitMethod = 'parts';
+            else if (expenseId % 4 === 3) splitMethod = 'percentage';
+            else splitMethod = 'custom';
+
             for (let userId = 1; userId <= 5; userId++) {
+                let counter = 0;
+                if (splitMethod === 'parts') {
+                    counter = userId; // e.g., user 1 gets 1 part, user 2 gets 2 parts, etc.
+                } else if (splitMethod === 'percentage') {
+                    counter = 20; // 5 users, each gets 20%
+                }
+                // For 'equal' and 'custom', counter remains 0
+
                 expenseSplitPromises.push(
                     pool.query(
-                        `INSERT INTO expense_users (expense_id, user_id, paid_to_user, share)
-                         VALUES ($1, $2, $3, $4)`,
-                        [expenseId, userId, expenseId % 5 + 1, 10.0]
+                        `INSERT INTO expense_users (expense_id, user_id, paid_to_user, share, counter)
+                         VALUES ($1, $2, $3, $4, $5)`,
+                        [expenseId, userId, (expenseId % 5) + 1, 10.0, counter]
                     )
                 );
             }

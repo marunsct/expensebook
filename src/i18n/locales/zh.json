@@ -1,0 +1,34 @@
+{
+  "errors": {
+    "fetch_user_groups": "用户组获取错误。",
+    "user_not_found": "未找到用户。",
+    "invalid_credentials": "无效的凭据。",
+    "missing_required_fields": "缺少必填字段。",
+    "internal_server_error": "服务器内部错误。",
+    "open_expenses": "用户在组中有未结算的支出，无法移除。",
+    "group_or_user_missing": "缺少组ID或用户ID。",
+    "expense_settle_error": "结算支出时出错。",
+    "expense_create_error": "创建支出时缺少必填字段。",
+    "invitation_sent_successfully": "邀请已成功发送。",
+    "account_closed_successfully": "账户已成功关闭。",
+    "api_key_generated_successfully": "API密钥生成成功。",
+    "api_key_retrieved_successfully": "API密钥获取成功。",
+    "fetch_group_images_error": "获取群组图片时出错。",
+    "create_group_error": "创建群组时出错。",
+    "upload_group_image_error": "上传群组图片时出错。",
+    "invite_user_error": "邀请用户时出错。",
+    "close_account_error": "关闭账户时出错。",
+    "must_settle_expenses": "请在关闭账户前结清所有未结算的支出。",
+    "change_password_error": "更改密码时出错。",
+    "missing_password_fields": "需要当前密码和新密码。",
+    "consumer_name_required": "需要消费者名称。",
+    "api_key_generation_error": "生成API密钥时出错。",
+    "api_key_retrieval_error": "获取API密钥时出错。"
+  },
+  "success": {
+    "user_added": "用户已成功添加到组。",
+    "user_deleted": "用户已成功从组中移除。",
+    "expense_settled": "支出已成功结算。",
+    "login_success": "登录成功。"
+  }
+}

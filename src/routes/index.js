@@ -55,6 +55,12 @@ router.put('/users/:userId', authenticateToken, userController.updateUserDetails
 // Close a user's account
 router.delete('/users/:userId/close-account', authenticateToken, loginController.closeAccount);
 
+// Get all data for a user (including deleted/settled expenses/splits, but not for deleted users)
+router.get('/users/:userId/all-data', authenticateToken, userController.getAllUserData);
+
+// Get all data for a user after a date (including deleted/settled expenses/splits, but not for deleted users)
+router.get('/users/:userId/all-data-after/:date', authenticateToken, userController.getAllUserDataAfterDate);
+
 // API For Groups
 // Create a new group
 router.post('/groups', authenticateToken, groupController.createGroup);
@@ -89,6 +95,7 @@ router.get('/expenses/unsettled/:userId', expenseController.getUnsettledExpenses
 
 // Get all expenses for a specific user after a specific date
 router.get('/expenses/unsettledAfter/:userId/:date', expenseController.getUnsettledExpensesAfterDate);
+
 
 // Export the router instance
 module.exports = router;

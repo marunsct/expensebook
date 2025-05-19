@@ -8,9 +8,32 @@
         "login_error": "Error al iniciar sesión.",
         "missing_expense_fields": "Faltan campos obligatorios para crear el gasto.",
         "expense_creation_error": "Error al crear el gasto.",
-        "expense_fetch_error": "Error al obtener los gastos."
+        "expense_fetch_error": "Error al obtener los gastos.",
+        "invitation_sent_successfully": "Invitación enviada exitosamente.",
+        "account_closed_successfully": "Cuenta cerrada exitosamente.",
+        "api_key_generated_successfully": "Clave API generada exitosamente.",
+        "api_key_retrieved_successfully": "Clave API recuperada exitosamente.",
+        "fetch_group_images_error": "Error al obtener imágenes del grupo.",
+        "create_group_error": "Error al crear el grupo.",
+        "upload_group_image_error": "Error al subir la imagen del grupo.",
+        "expense_settle_error": "Error al saldar los gastos.",
+        "invite_user_error": "Error al invitar al usuario.",
+        "close_account_error": "Error al cerrar la cuenta.",
+        "must_settle_expenses": "Debe saldar todos los gastos abiertos antes de cerrar su cuenta.",
+        "change_password_error": "Error al cambiar la contraseña.",
+        "missing_password_fields": "Se requieren la contraseña actual y la nueva contraseña.",
+        "consumer_name_required": "Se requiere el nombre del consumidor.",
+        "api_key_generation_error": "Error al generar la clave API.",
+        "api_key_retrieval_error": "Error al recuperar la clave API."
     },
     "messages": {
         "login_success": "Inicio de sesión exitoso."
+    },
+    "success": {
+        "user_added": "Usuario agregado exitosamente al grupo.",
+        "user_deleted": "Usuario eliminado exitosamente del grupo.",
+        "expense_settled": "Gastos saldados exitosamente.",
+        "login_success": "Inicio de sesión exitoso.",
+        "fetching_groups": "Grupos obtenidos exitosamente para el usuario {{userId}}."
     }
 }

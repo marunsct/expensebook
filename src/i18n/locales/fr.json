@@ -1,0 +1,34 @@
+{
+  "errors": {
+    "fetch_user_groups": "Erreur lors de la récupération des groupes de l'utilisateur.",
+    "user_not_found": "Utilisateur non trouvé.",
+    "invalid_credentials": "Identifiants invalides.",
+    "missing_required_fields": "Champs obligatoires manquants.",
+    "internal_server_error": "Erreur interne du serveur.",
+    "open_expenses": "L'utilisateur a des dépenses ouvertes dans le groupe et ne peut pas être supprimé.",
+    "group_or_user_missing": "ID de groupe ou d'utilisateur manquant.",
+    "expense_settle_error": "Erreur lors du règlement des dépenses.",
+    "expense_create_error": "Champs obligatoires manquants pour la création de la dépense.",
+    "invitation_sent_successfully": "Invitation envoyée avec succès.",
+    "account_closed_successfully": "Compte fermé avec succès.",
+    "api_key_generated_successfully": "Clé API générée avec succès.",
+    "api_key_retrieved_successfully": "Clé API récupérée avec succès.",
+    "fetch_group_images_error": "Erreur lors de la récupération des images du groupe.",
+    "create_group_error": "Erreur lors de la création du groupe.",
+    "upload_group_image_error": "Erreur lors du téléchargement de l'image du groupe.",
+    "invite_user_error": "Erreur lors de l'invitation de l'utilisateur.",
+    "close_account_error": "Erreur lors de la fermeture du compte.",
+    "must_settle_expenses": "Vous devez régler toutes les dépenses ouvertes avant de fermer votre compte.",
+    "change_password_error": "Erreur lors du changement de mot de passe.",
+    "missing_password_fields": "Le mot de passe actuel et le nouveau mot de passe sont requis.",
+    "consumer_name_required": "Le nom du consommateur est requis.",
+    "api_key_generation_error": "Erreur lors de la génération de la clé API.",
+    "api_key_retrieval_error": "Erreur lors de la récupération de la clé API."
+  },
+  "success": {
+    "user_added": "Utilisateur ajouté avec succès au groupe.",
+    "user_deleted": "Utilisateur supprimé avec succès du groupe.",
+    "expense_settled": "Dépenses réglées avec succès.",
+    "login_success": "Connexion réussie."
+  }
+}

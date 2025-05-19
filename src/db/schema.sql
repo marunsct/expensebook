@@ -23,7 +23,9 @@ CREATE TABLE IF NOT EXISTS users (
     invited_flag BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    delete_flag BOOLEAN DEFAULT FALSE
+    updated_by INT REFERENCES users(id) ON DELETE SET NULL,
+    delete_flag BOOLEAN DEFAULT FALSE,
+    deleted_at TIMESTAMP
 );
 
 -- Create the groups table
@@ -33,8 +35,10 @@ CREATE TABLE IF NOT EXISTS groups (
     currency VARCHAR(10) NOT NULL,
     created_by INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_by INT REFERENCES users(id) ON DELETE SET NULL,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    delete_flag BOOLEAN DEFAULT FALSE
+    delete_flag BOOLEAN DEFAULT FALSE,
+    deleted_at TIMESTAMP
 );
 
 -- Create a junction table to associate users with groups
@@ -44,7 +48,10 @@ CREATE TABLE IF NOT EXISTS group_users (
     user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     created_by INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     joined_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    delete_flag BOOLEAN DEFAULT FALSE
+    updated_by INT REFERENCES users(id) ON DELETE SET NULL,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    delete_flag BOOLEAN DEFAULT FALSE,
+    deleted_at TIMESTAMP
 );
 
 -- Create the expenses table
@@ -60,8 +67,10 @@ CREATE TABLE IF NOT EXISTS expenses (
     flag BOOLEAN DEFAULT FALSE, -- expense settled flag
     created_by INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_by INT REFERENCES users(id) ON DELETE SET NULL,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    delete_flag BOOLEAN DEFAULT FALSE
+    delete_flag BOOLEAN DEFAULT FALSE,
+    deleted_at TIMESTAMP
 );
 
 -- Create the expense_users table
@@ -74,8 +83,10 @@ CREATE TABLE IF NOT EXISTS expense_users (
     counter NUMERIC(10, 2),
     flag BOOLEAN DEFAULT FALSE, -- expense splits settled flag
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_by INT REFERENCES users(id) ON DELETE SET NULL,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    delete_flag BOOLEAN DEFAULT FALSE
+    delete_flag BOOLEAN DEFAULT FALSE,
+    deleted_at TIMESTAMP
 );
 
 -- Create a new table for storing multiple images for groups
@@ -84,7 +95,10 @@ CREATE TABLE IF NOT EXISTS group_images (
     group_id INT NOT NULL REFERENCES groups(id) ON DELETE CASCADE,
     image_url TEXT NOT NULL,
     uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    delete_flag BOOLEAN DEFAULT FALSE
+    updated_by INT REFERENCES users(id) ON DELETE SET NULL,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    delete_flag BOOLEAN DEFAULT FALSE,
+    deleted_at TIMESTAMP
 );
 
 -- Create a tokens table
@@ -108,7 +122,20 @@ CREATE TABLE IF NOT EXISTS api_keys (
 CREATE OR REPLACE FUNCTION update_updated_at_column()
 RETURNS TRIGGER AS $$
 BEGIN
-    NEW.updated_at = CURRENT_TIMESTAMP;
+    IF NEW.updated_at IS NULL THEN
+        NEW.updated_at = CURRENT_TIMESTAMP;
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Create or replace function to set deleted_at when delete_flag is set
+CREATE OR REPLACE FUNCTION set_deleted_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF NEW.delete_flag = TRUE AND (OLD.delete_flag IS DISTINCT FROM TRUE) THEN
+        NEW.deleted_at = CURRENT_TIMESTAMP;
+    END IF;
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
@@ -126,6 +153,16 @@ BEGIN
         FOR EACH ROW
         EXECUTE FUNCTION update_updated_at_column();
     END IF;
+    IF NOT EXISTS (
+        SELECT 1
+        FROM pg_trigger
+        WHERE tgname = 'set_deleted_at_users'
+    ) THEN
+        CREATE TRIGGER set_deleted_at_users
+        BEFORE UPDATE ON users
+        FOR EACH ROW
+        EXECUTE FUNCTION set_deleted_at_column();
+    END IF;
 END
 $$;
 
@@ -141,6 +178,42 @@ BEGIN
         BEFORE UPDATE ON groups
         FOR EACH ROW
         EXECUTE FUNCTION update_updated_at_column();
+    END IF;
+    IF NOT EXISTS (
+        SELECT 1
+        FROM pg_trigger
+        WHERE tgname = 'set_deleted_at_groups'
+    ) THEN
+        CREATE TRIGGER set_deleted_at_groups
+        BEFORE UPDATE ON groups
+        FOR EACH ROW
+        EXECUTE FUNCTION set_deleted_at_column();
+    END IF;
+END
+$$;
+
+-- Add trigger to the group_users table
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1
+        FROM pg_trigger
+        WHERE tgname = 'set_updated_at_group_users'
+    ) THEN
+        CREATE TRIGGER set_updated_at_group_users
+        BEFORE UPDATE ON group_users
+        FOR EACH ROW
+        EXECUTE FUNCTION update_updated_at_column();
+    END IF;
+    IF NOT EXISTS (
+        SELECT 1
+        FROM pg_trigger
+        WHERE tgname = 'set_deleted_at_group_users'
+    ) THEN
+        CREATE TRIGGER set_deleted_at_group_users
+        BEFORE UPDATE ON group_users
+        FOR EACH ROW
+        EXECUTE FUNCTION set_deleted_at_column();
     END IF;
 END
 $$;
@@ -158,6 +231,16 @@ BEGIN
         FOR EACH ROW
         EXECUTE FUNCTION update_updated_at_column();
     END IF;
+    IF NOT EXISTS (
+        SELECT 1
+        FROM pg_trigger
+        WHERE tgname = 'set_deleted_at_expenses'
+    ) THEN
+        CREATE TRIGGER set_deleted_at_expenses
+        BEFORE UPDATE ON expenses
+        FOR EACH ROW
+        EXECUTE FUNCTION set_deleted_at_column();
+    END IF;
 END
 $$;
 
@@ -174,6 +257,69 @@ BEGIN
         FOR EACH ROW
         EXECUTE FUNCTION update_updated_at_column();
     END IF;
+    IF NOT EXISTS (
+        SELECT 1
+        FROM pg_trigger
+        WHERE tgname = 'set_deleted_at_expense_users'
+    ) THEN
+        CREATE TRIGGER set_deleted_at_expense_users
+        BEFORE UPDATE ON expense_users
+        FOR EACH ROW
+        EXECUTE FUNCTION set_deleted_at_column();
+    END IF;
 END
 $$;
+
+-- Add trigger to the group_images table
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1
+        FROM pg_trigger
+        WHERE tgname = 'set_updated_at_group_images'
+    ) THEN
+        CREATE TRIGGER set_updated_at_group_images
+        BEFORE UPDATE ON group_images
+        FOR EACH ROW
+        EXECUTE FUNCTION update_updated_at_column();
+    END IF;
+    IF NOT EXISTS (
+        SELECT 1
+        FROM pg_trigger
+        WHERE tgname = 'set_deleted_at_group_images'
+    ) THEN
+        CREATE TRIGGER set_deleted_at_group_images
+        BEFORE UPDATE ON group_images
+        FOR EACH ROW
+        EXECUTE FUNCTION set_deleted_at_column();
+    END IF;
+END
+$$;
+
+-- Add indexes for performance and query optimization
+CREATE INDEX IF NOT EXISTS idx_group_users_group_id ON group_users(group_id);
+CREATE INDEX IF NOT EXISTS idx_group_users_user_id ON group_users(user_id);
+CREATE INDEX IF NOT EXISTS idx_expenses_group_id ON expenses(group_id);
+CREATE INDEX IF NOT EXISTS idx_expense_users_expense_id ON expense_users(expense_id);
+CREATE INDEX IF NOT EXISTS idx_expense_users_user_id ON expense_users(user_id);
+CREATE INDEX IF NOT EXISTS idx_expense_users_paid_to_user ON expense_users(paid_to_user);
+CREATE INDEX IF NOT EXISTS idx_group_images_group_id ON group_images(group_id);
+
+-- Add unique constraint to prevent duplicate splits
+ALTER TABLE expense_users
+    ADD CONSTRAINT uq_expense_users_expense_user_paid UNIQUE (expense_id, user_id, paid_to_user);
+
+-- Add comments for documentation
+COMMENT ON COLUMN users.updated_by IS 'User who last updated this record';
+COMMENT ON COLUMN users.deleted_at IS 'Timestamp when the user was soft deleted';
+COMMENT ON COLUMN groups.updated_by IS 'User who last updated this group';
+COMMENT ON COLUMN groups.deleted_at IS 'Timestamp when the group was soft deleted';
+COMMENT ON COLUMN group_users.updated_by IS 'User who last updated this group membership';
+COMMENT ON COLUMN group_users.deleted_at IS 'Timestamp when the group membership was soft deleted';
+COMMENT ON COLUMN expenses.updated_by IS 'User who last updated this expense';
+COMMENT ON COLUMN expenses.deleted_at IS 'Timestamp when the expense was soft deleted';
+COMMENT ON COLUMN expense_users.updated_by IS 'User who last updated this expense split';
+COMMENT ON COLUMN expense_users.deleted_at IS 'Timestamp when the expense split was soft deleted';
+COMMENT ON COLUMN group_images.updated_by IS 'User who last updated this group image';
+COMMENT ON COLUMN group_images.deleted_at IS 'Timestamp when the group image was soft deleted';
 

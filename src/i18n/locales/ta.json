@@ -1,0 +1,35 @@
+{
+  "errors": {
+    "fetch_user_groups": "பயனர் குழுக்களை பெறுவதில் பிழை.",
+    "user_not_found": "பயனர் கிடைக்கவில்லை.",
+    "invalid_credentials": "தவறான நுழைவு விவரங்கள்.",
+    "missing_required_fields": "தேவையான புலங்கள் காணவில்லை.",
+    "internal_server_error": "உள் சேவை பிழை.",
+    "open_expenses": "பயனருக்கு குழுவில் திறந்த செலவுகள் உள்ளதால் நீக்க முடியாது.",
+    "group_or_user_missing": "குழு ஐடி அல்லது பயனர் ஐடி காணவில்லை.",
+    "expense_settle_error": "செலவுகளை சமநிலைப்படுத்துவதில் பிழை.",
+    "expense_create_error": "செலவை உருவாக்க தேவையான புலங்கள் காணவில்லை.",
+    "invitation_sent_successfully": "அழைப்பு வெற்றிகரமாக அனுப்பப்பட்டது.",
+    "account_closed_successfully": "கணக்கு வெற்றிகரமாக மூடப்பட்டது.",
+    "api_key_generated_successfully": "API விசை வெற்றிகரமாக உருவாக்கப்பட்டது.",
+    "api_key_retrieved_successfully": "API விசை வெற்றிகரமாக பெறப்பட்டது.",
+    "fetch_group_images_error": "குழு படங்களை பெறுவதில் பிழை.",
+    "create_group_error": "குழுவை உருவாக்குவதில் பிழை.",
+    "upload_group_image_error": "குழு படத்தை பதிவேற்றுவதில் பிழை.",
+    "invite_user_error": "பயனரை அழைப்பதில் பிழை.",
+    "close_account_error": "கணக்கை மூடுவதில் பிழை.",
+    "must_settle_expenses": "கணக்கை மூடுவதற்கு முன் அனைத்து திறந்த செலவுகளையும் சமநிலைப்படுத்த வேண்டும்.",
+    "change_password_error": "கடவுச்சொல்லை மாற்றுவதில் பிழை.",
+    "missing_password_fields": "தற்போதைய மற்றும் புதிய கடவுச்சொல் தேவை.",
+    "consumer_name_required": "நுகர்வோர் பெயர் தேவை.",
+    "api_key_generation_error": "API விசை உருவாக்குவதில் பிழை.",
+    "api_key_retrieval_error": "API விசை பெறுவதில் பிழை."
+  },
+  "success": {
+    "user_added": "பயனர் குழுவில் வெற்றிகரமாக சேர்க்கப்பட்டார்.",
+    "user_deleted": "பயனர் குழுவில் இருந்து வெற்றிகரமாக நீக்கப்பட்டார்.",
+    "expense_settled": "செலவுகள் வெற்றிகரமாக சமநிலைப்படுத்தப்பட்டன.",
+    "login_success": "நுழைவு வெற்றிகரமாக முடிந்தது.",
+    "fetching_groups": "பயனர் {{userId}}-க்கு குழுக்கள் வெற்றிகரமாக பெறப்பட்டன."
+  }
+}

@@ -15,11 +15,28 @@
 		"fetch_user_balances": "Error fetching user balances.",
 		"user_has_open_expenses": "The user has open expenses in the group and cannot be removed.",
 		"delete_user_from_group_error": "Error deleting user from the group.",
-		"fetch_user_groups_error": "errors.fetch_user_groups_error"
+		"fetch_user_groups_error": "errors.fetch_user_groups_error",
+		"invitation_sent_successfully": "Invitation sent successfully.",
+		"account_closed_successfully": "Account closed successfully.",
+		"api_key_generated_successfully": "API key generated successfully.",
+		"api_key_retrieved_successfully": "API key retrieved successfully.",
+		"fetch_group_images_error": "Error fetching group images.",
+		"create_group_error": "Error creating group.",
+		"upload_group_image_error": "Error uploading group image.",
+		"expense_settle_error": "Error settling up expenses.",
+		"invite_user_error": "Error inviting user.",
+		"close_account_error": "Error closing account.",
+		"must_settle_expenses": "You must settle all open expenses before closing your account.",
+		"change_password_error": "Error changing password.",
+		"missing_password_fields": "Current password and new password are required.",
+		"consumer_name_required": "Consumer name is required.",
+		"api_key_generation_error": "Error generating API key.",
+		"api_key_retrieval_error": "Error retrieving API key."
 	},
 	"messages": {
 		"login_success": "Login successful.",
 		"user_added_to_group": "User successfully added to the group.",
-		"user_deleted_from_group": "User successfully deleted from the group."
+		"user_deleted_from_group": "User successfully deleted from the group.",
+		"fetching_groups": "Successfully fetched groups for user {{userId}}."
 	}
 }

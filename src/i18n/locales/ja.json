@@ -1,0 +1,35 @@
+{
+  "errors": {
+    "fetch_user_groups": "ユーザーのグループ取得エラー。",
+    "user_not_found": "ユーザーが見つかりません。",
+    "invalid_credentials": "無効な認証情報です。",
+    "missing_required_fields": "必須項目が不足しています。",
+    "internal_server_error": "内部サーバーエラー。",
+    "open_expenses": "ユーザーにはグループ内に未精算の支出があるため、削除できません。",
+    "group_or_user_missing": "グループIDまたはユーザーIDがありません。",
+    "expense_settle_error": "支出の精算中にエラーが発生しました。",
+    "expense_create_error": "支出作成に必要な項目が不足しています。",
+    "invitation_sent_successfully": "招待が正常に送信されました。",
+    "account_closed_successfully": "アカウントが正常に閉鎖されました。",
+    "api_key_generated_successfully": "APIキーが正常に生成されました。",
+    "api_key_retrieved_successfully": "APIキーが正常に取得されました。",
+    "fetch_group_images_error": "グループ画像の取得中にエラーが発生しました。",
+    "create_group_error": "グループの作成中にエラーが発生しました。",
+    "upload_group_image_error": "グループ画像のアップロード中にエラーが発生しました。",
+    "invite_user_error": "ユーザーの招待中にエラーが発生しました。",
+    "close_account_error": "アカウントの閉鎖中にエラーが発生しました。",
+    "must_settle_expenses": "アカウントを閉鎖する前にすべての未精算の支出を精算してください。",
+    "change_password_error": "パスワードの変更中にエラーが発生しました。",
+    "missing_password_fields": "現在のパスワードと新しいパスワードが必要です。",
+    "consumer_name_required": "コンシューマー名が必要です。",
+    "api_key_generation_error": "APIキーの生成中にエラーが発生しました。",
+    "api_key_retrieval_error": "APIキーの取得中にエラーが発生しました。"
+  },
+  "success": {
+    "user_added": "ユーザーがグループに正常に追加されました。",
+    "user_deleted": "ユーザーがグループから正常に削除されました。",
+    "expense_settled": "支出が正常に精算されました。",
+    "login_success": "ログインに成功しました。",
+    "fetching_groups": "ユーザー{{userId}}のグループを正常に取得しました。"
+  }
+}

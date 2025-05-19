@@ -40,6 +40,7 @@ class Expense {
  * @param {string} [image] - Optional image URL
  * @param {number} created_by - User ID of creator
  * @param {Array<{userId: number, amount?: number, percentage?: number, counter?: number}>} splits - Split definitions
+ * @param {number} [updated_by] - User ID of the updater
  * @returns {Promise<Object>} Created expense with splits
  * @throws {Error} If validation fails or database operation fails
  */
@@ -53,7 +54,8 @@ class Expense {
     contributors,
     image,
     created_by,
-    splits
+    splits,
+    updated_by = null // new field
   ) {
     if (!amount || amount <= 0) {
       throw new Error('Invalid amount: must be greater than 0');
@@ -272,10 +274,9 @@ class Expense {
 
     // Create the expense
     const expense = await client.query(
-      `INSERT INTO expenses (description, currency, amount, group_id, split_method, created_by)
-       VALUES ($1, $2, $3, $4, $5, $6)
-       RETURNING *`,
-      [description, currency, amount, group_id, split_method, created_by]
+      `INSERT INTO expenses (description, currency, amount, group_id, split_method, paid_by_user, image_url, flag, created_by, created_at, updated_at, updated_by, delete_flag, deleted_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, DEFAULT, $8, DEFAULT, DEFAULT, $9, DEFAULT, DEFAULT) RETURNING *`,
+      [description, currency, amount, group_id, split_method, contributors[0]?.userId || null, image, created_by, updated_by]
     );
 
     // Create the expense entries in database
@@ -312,14 +313,34 @@ class Expense {
   };
 
 
-  static async addSplit(client, expenseId, userId, paidToUser, share) {
-    const split = await client.query(
-      `INSERT INTO expense_users (expense_id, user_id, paid_to_user, share)
-             VALUES ($1, $2, $3, $4)`,
-      [expenseId, userId, paidToUser, share]
+  static async addSplit(client, expenseId, userId, paidToUser, share, counter = null, updated_by = null) {
+    await client.query(
+      `INSERT INTO expense_users (expense_id, user_id, paid_to_user, share, counter, flag, created_at, updated_at, updated_by, delete_flag, deleted_at)
+       VALUES ($1, $2, $3, $4, $5, DEFAULT, DEFAULT, DEFAULT, $6, DEFAULT, DEFAULT)`,
+      [expenseId, userId, paidToUser, share, counter, updated_by]
     );
-    console.log("Split added:", split, split.rows[0]);
-    return split.rows[0];
+  }
+
+  static async deleteExpense(client, expenseId, updated_by = null) {
+    let query = `UPDATE expenses SET delete_flag = TRUE, deleted_at = CURRENT_TIMESTAMP`;
+    const values = [expenseId];
+    if (updated_by !== null) {
+      query += `, updated_by = $2`;
+      values.push(updated_by);
+    }
+    query += ` WHERE id = $1`;
+    await client.query(query, values);
+  }
+
+  static async deleteExpenseSplit(client, expenseUserId, updated_by = null) {
+    let query = `UPDATE expense_users SET delete_flag = TRUE, deleted_at = CURRENT_TIMESTAMP`;
+    const values = [expenseUserId];
+    if (updated_by !== null) {
+      query += `, updated_by = $2`;
+      values.push(updated_by);
+    }
+    query += ` WHERE id = $1`;
+    await client.query(query, values);
   }
 
   // Method to get all expenses
