@@ -306,8 +306,15 @@ CREATE INDEX IF NOT EXISTS idx_expense_users_paid_to_user ON expense_users(paid_
 CREATE INDEX IF NOT EXISTS idx_group_images_group_id ON group_images(group_id);
 
 -- Add unique constraint to prevent duplicate splits
-ALTER TABLE expense_users
-    ADD CONSTRAINT uq_expense_users_expense_user_paid UNIQUE (expense_id, user_id, paid_to_user);
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint WHERE conname = 'uq_expense_users_expense_user_paid'
+    ) THEN
+        ALTER TABLE expense_users
+            ADD CONSTRAINT uq_expense_users_expense_user_paid UNIQUE (expense_id, user_id, paid_to_user);
+    END IF;
+END$$;
 
 -- Add comments for documentation
 COMMENT ON COLUMN users.updated_by IS 'User who last updated this record';

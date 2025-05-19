@@ -1,7 +1,7 @@
 const { pool } = require("../db");
 const { Group } = require("../models/Groups");
 const logger = require("../middleware/logger");
-const i18n = req.__ ? req : require("../i18n/i18n");
+
 // Create a group
 const createGroup = async (req, res) => {
   const { name, currency, created_by } = req.body;
